@@ -1,25 +1,36 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <elf.h>
 
-typedef struct ArrHeader {
-    uint16_t    capacity;
-    uint16_t    size;
-} arrh_t;
-
-float* FillArr();
+FILE* CreateElfMagic(const char *fname);
 
 int main() {
-    float *arr = FillArr();
 
+    FILE *efp = CreateElfMagic("elf-file");
+    if (efp == NULL) {
+        fprintf(stderr, "Could not open file for writing");
+        fclose(efp);
+        return -1;
+    }
 
+    fclose(efp);
     return 0;
 }
 
-float* FillArr() {
-    float *arr = malloc(15 * sizeof(float));
+FILE* CreateElfMagic(const char *fname) {
+    FILE *fp = fopen(fname, "wb+");
+    if (fp == NULL) return NULL;
 
+    unsigned char e_ident[16] = {
+        0x7F, 'E', 'L', 'F',        // elf identifier
+        ELFCLASS32,                             // specify the bitwidth of the machine
+        ELFDATA2LSB,                            // specify endianness
+        EV_CURRENT,                             // specify elf version (always EV_CURRENT)
+        ELFOSABI_SYSV,                          // specify OS ABI
+        0x0,                                    // ABI version (always 0x0)
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0   // padding
+    }; 
 
+    fwrite(e_ident, sizeof(unsigned char), sizeof(e_ident), fp);
 
-    return arr;
+    return fp;
 }
