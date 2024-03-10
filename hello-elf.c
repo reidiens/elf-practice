@@ -6,6 +6,7 @@
 
 Elf32_Ehdr CreateElfHeader();
 Elf32_Phdr CreateProgramHeader();
+unsigned char WriteMachineCode(FILE *fp);
 
 int main(int argc, char *argv[]) {
 
@@ -27,10 +28,15 @@ int main(int argc, char *argv[]) {
     Elf32_Ehdr e_head = CreateElfHeader();
     Elf32_Phdr phdr = CreateProgramHeader();
 
-    e_head.e_entry = 0;     // virtual memory entry point. 0 more than likely results in a seg fault. Or worse!
+    e_head.e_entry = phdr.p_vaddr + 0xE;     // virtual memory entry point
 
     fwrite(&e_head, sizeof(e_head), 1, efp);
     fwrite(&phdr, sizeof(phdr), 1, efp);
+    
+    if (!WriteMachineCode(efp)) {
+        fprintf(stderr, "Could not write machine code to file");
+        return -1;
+    }
     
     if (fclose(efp) == EOF) {
         fprintf(stderr, "Could not close file stream (could not dump buffer)\n");
@@ -39,7 +45,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Created ELF file \"%s\" successfully :)\n", fname);
-    puts("(as of this build the file isnt fully functional)\n");
     return 0;
 }
 
@@ -50,7 +55,8 @@ Elf32_Ehdr CreateElfHeader() {
     The only missing element is e_entry, which specifies the starting address in virtual memory to which the 
         kernel hands over control when executing.
     
-    This is to be filled in in some other function. I'm too lazy to do it right now.
+    In this program, it is later set to p_vaddr because of the way the program is laid out,
+        but this value will differ between programs.
 */
 
     Elf32_Ehdr e_head;
@@ -68,8 +74,8 @@ Elf32_Ehdr CreateElfHeader() {
     for (int i = 9; i < sizeof(e_head.e_ident); i++) 
         e_head.e_ident[i] = 0x0;                // padding :p
             
-    e_head.e_type = ET_DYN;                     // specify this is a dynamic file
-    e_head.e_machine = EM_X86_64;               // specify machine architecture
+    e_head.e_type = ET_EXEC;                    // specify this is an executable
+    e_head.e_machine = EM_386;                  // specify machine architecture
     e_head.e_version = EV_CURRENT;              // elf version. always EV_CURRENT
     // e_entry
     e_head.e_phoff = sizeof(Elf32_Ehdr);        // program header table offset (immediately after the ELF header)
@@ -78,7 +84,7 @@ Elf32_Ehdr CreateElfHeader() {
     e_head.e_ehsize = sizeof(Elf32_Ehdr);       // ELF header size
     e_head.e_phentsize = sizeof(Elf32_Phdr);    // size of program header
     e_head.e_phnum = 1;                         // number of entries in the program header
-    e_head.e_shentsize = 0;                     // section header entry size
+    e_head.e_shentsize = 0x28;                  // section header entry size. 0x28 on 32-bit
     e_head.e_shnum = 0;                         // number of entries in section header
     e_head.e_shstrndx = 0;                      // i have no idea what this is rn but it's ok to leave it as 0 :D
 
@@ -86,27 +92,76 @@ Elf32_Ehdr CreateElfHeader() {
 }
 
 Elf32_Phdr CreateProgramHeader() {
-/*  Initializes a program header struct containing SOME of the info
-        necessary for a program header.
+/*  Initializes a structure containing the information needed for the 
+        program header
 
-    The missing entries are:
-        p_vaddr         - Virtual memory address of the first segment
-        p_paddr         - Physical memory address of the first segment
-        p_filesz        - Size of the whole file image in bytes
-        p_memsz         - Size the file takes up in memory (filesize)
+    Most of this stuff (of course) is architecture and ABI dependent.
 
-    I'll figure how to implement those things laterrrrr
+    Refer to 
+        https://www.sco.com/developers/devspecs/gabi41.pdf
+    and 
+        https://www.sco.com/developers/devspecs/abi386-4.pdf
+
+    for more information on the values I'm using.
 */
-
     Elf32_Phdr phdr;
 
-    phdr.p_type = PT_LOAD;                      // specify that this program is loadable
-    phdr.p_offset = 0;                          // offset from beginning of file for first segment. can be 0
+    phdr.p_type = PT_LOAD;                                      // specify that this program is loadable
+    phdr.p_offset = sizeof(Elf32_Ehdr) + sizeof(Elf32_Phdr);    // offset from beginning of file for first segment. can be 0
+    phdr.p_vaddr = 0x08048054;                                  // virtual memory address. refer to system v ABI i386 supplement
+    phdr.p_paddr = 0;                                           // unused in x86
 
-    // missing vals go here //
+    phdr.p_filesz = 0x2E;                       // size of the following segment 
+    phdr.p_memsz = phdr.p_filesz;
 
-    phdr.p_flags = PF_X | PF_R;                 // this segment is execuatble and readable
-    phdr.p_align = 0x1000;                      // value to which segments are aligned to in memory
+    phdr.p_flags = PF_X | PF_R;                 // this segment is execuatble an// size of the following segmentd readable
+    phdr.p_align = 0x1000;                      // value to which segments are aligned to in memory. 0x1000 for x86 
 
     return phdr;
+}
+
+unsigned char WriteMachineCode(FILE *fp) {
+    if (fp == NULL) return 0;
+
+    char msg[14] = "Hello, World!\n";                           // size = 14
+
+    char write_call[5] = {
+        0xB8,   0x04, 0x0, 0x0, 0x0         // MOV  EAX, 4      ; write
+    };
+
+    char write_stdout[5] = {
+        0xBB,   0x01, 0x00, 0x00, 0x00      // MOV  EBX, 1      ; to stdout
+    };
+
+    char write_msg[5] = {
+        0x0B9,  0x54, 0x80, 0x04, 0x08      // MOV  EBX, &msg      
+    };
+
+    char write_msglen[5] = {
+        0xBA,   0x0E, 0x00, 0x00, 0x00      // MOV  ECX, 14
+    };
+
+    char exit_call[5] = {
+        0xB8,   0x01, 0x00, 0x00, 0x00      // MOV  EAX, 1      ; exit
+    };
+
+    char errcode[5] = {
+        0xBB,   0x00, 0x00, 0x00, 0x00      // MOV  EBX, 0      ; return value
+    };
+
+    char call[2] = { 0xCD, 0x80 };                      // int 0x80         ; i386 equivalent of syscall
+
+    fwrite(msg, 1, sizeof(msg), fp);
+
+    fwrite(write_call, 1, sizeof(write_call), fp);
+    fwrite(write_stdout, 1, sizeof(write_stdout), fp);
+    fwrite(write_msg, 1, sizeof(write_msg), fp);
+    fwrite(write_msglen, 1, sizeof(write_msglen), fp);
+    fwrite(call, 1, sizeof(call), fp);
+
+    fwrite(exit_call, 1, sizeof(exit_call), fp);
+    fwrite(errcode, 1, sizeof(errcode), fp);
+    fwrite(call, 1, sizeof(call), fp);
+    
+    return 1;
 }
