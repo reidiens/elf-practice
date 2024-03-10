@@ -9,7 +9,7 @@ echo "built!"
 chmod +x ${PNAME}
 
 if [ "$1" != "" ]; then
-    echo "generating ELF file..."
+    echo "generating elf file..."
     ./${PNAME} "$1"
 
 else
