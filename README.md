@@ -1,6 +1,5 @@
 # 'Hello World!' as an ELF file
-### Generates an executable ELF file that says "Hello, World!" for x86 Linux (or system v XD)
-
+### Generates an executable ELF file that says "Hello, World!" for x86 Linux
 
 ## Compilation:
 It's super simple. Use any compiler you want and name the output anything you want. For example:
