@@ -93,7 +93,7 @@ Elf32_Ehdr CreateElfHeader() {
     ehdr.e_ident[1] = 'E';            
     ehdr.e_ident[2] = 'L';        
     ehdr.e_ident[3] = 'F';        
-    ehdr.e_ident[4] = ELFCLASS32;             // define 32-bit architecture
+    ehdr.e_ident[4] = ELFCLASS32;             // specify bit class
     ehdr.e_ident[5] = ELFDATA2LSB;            // specify endianness (little)
     ehdr.e_ident[6] = EV_CURRENT;             // ELF version (always EV_CURRENT)
     ehdr.e_ident[7] = ELFOSABI_SYSV;          // OS ABI
@@ -114,7 +114,7 @@ Elf32_Ehdr CreateElfHeader() {
     ehdr.e_phnum = 1;                         // number of entries in the program header
     ehdr.e_shentsize = sizeof(Elf32_Shdr);    // section header entry size. 0x28 on 32-bit
     ehdr.e_shnum = 0;                         // number of entries in section header
-    ehdr.e_shstrndx = 0;                      // i have no idea what this is rn but it's ok to leave it as 0 :D
+    ehdr.e_shstrndx = 0;                      // section header string table offset
 
     return ehdr;
 }
@@ -149,6 +149,8 @@ Elf32_Phdr CreateProgramHeader() {
 }
 
 void WriteMachineCode(FILE *fp) {
+/*  Prepare and write the machine code that goes after the program header  */
+
     char msg[14] = "Hello, World!\n";                           // size = 14
 
     char write_call[5] = {

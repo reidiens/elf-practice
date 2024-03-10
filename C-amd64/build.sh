@@ -8,20 +8,26 @@ make PROG=${PNAME}
 echo "built!"
 chmod +x ${PNAME}
 
-if [ "$1" != "" ] && [ "$2" != "" ]; then
+if [ "$1" != "" ]; then
     echo "generating ELF file..."
-    ./${PNAME} "$2"
-    rm -f ${PNAME}
+    ./${PNAME} "$1"
+
 else
     echo ""
-    echo "What do you want the ELF file name to be?"
+    echo "What do you want to name the elf file?"
     echo "Hit enter for default name ($DEFAULT)"
     read ELFNAME
-    
+
     if [ "$ELFNAME" = "" ]; then
+        echo "File will be created with default name"
+        sleep 1
+        echo "generating elf file..."
         ./${PNAME} ${DEFAULT}
-    else
+    
+    else 
+        echo "generating elf file..."
         ./${PNAME} ${ELFNAME}
+
     fi
 
     rm -f ${PNAME}
