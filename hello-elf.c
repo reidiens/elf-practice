@@ -1,3 +1,33 @@
+/*  HELLO WORLD AS AN ELF FILE
+    Ruben Toledo
+    03-10-2024
+---------------------------------------------------------------
+    This program generates an ELF file that, when run
+        will execute the classic "Hello, World!" program
+        
+    Sources used:
+    
+        System V ABI Specification:
+            https://www.sco.com/developers/devspecs/gabi41.pdf 
+
+        System V Abi i386 Supplement:
+            https://www.sco.com/developers/devspecs/abi386-4.pdf
+
+        Example ELF file that immediately returns 0:
+            https://dacvs.neocities.org/1exit
+
+        List of i286 opcodes:
+            http://ref.x86asm.net/coder32.html#xB8
+
+        List of x86 Linux system calls:
+            https://syscalls.w3challs.com/?arch=x86
+
+        i386 Programmer's Reference Manual:
+            http://css.csail.mit.edu/6.858/2013/readings/i386.pdf
+
+---------------------------------------------------------------
+*/
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -35,6 +65,7 @@ int main(int argc, char *argv[]) {
     
     if (!WriteMachineCode(efp)) {
         fprintf(stderr, "Could not write machine code to file");
+        fclose(efp);
         return -1;
     }
     
@@ -55,8 +86,8 @@ Elf32_Ehdr CreateElfHeader() {
     The only missing element is e_entry, which specifies the starting address in virtual memory to which the 
         kernel hands over control when executing.
     
-    In this program, it is later set to p_vaddr because of the way the program is laid out,
-        but this value will differ between programs.
+    Its value is offset from p_vaddr in this program to avoid making a section
+        table for the "Hello, World!\n" string
 */
 
     Elf32_Ehdr e_head;
