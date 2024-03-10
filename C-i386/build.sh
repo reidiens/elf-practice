@@ -1,10 +1,7 @@
 #!/bin/sh
 
-if [ "$1" = "" ]; then
-    PNAME="hello-elf"    
-else
-    PNAME="$1"
-fi
+PNAME=hello-elf-i386
+DEFAULT=i386-elf-file
 
 echo "building..."
 make PROG=${PNAME}
@@ -18,8 +15,14 @@ if [ "$1" != "" ] && [ "$2" != "" ]; then
 else
     echo ""
     echo "What do you want the ELF file name to be?"
-    echo "Hit enter for default name (elf-file)"
+    echo "Hit enter for default name ($DEFAULT)"
     read ELFNAME
-    ./${PNAME} ${ELFNAME}
+
+    if [ "$ELFNAME" = "" ]; then
+        ./${PNAME} ${DEFAULT}
+    else
+        ./${PNAME} ${ELFNAME}
+    fi
+
     rm -f ${PNAME}
 fi

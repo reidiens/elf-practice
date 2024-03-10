@@ -36,16 +36,18 @@
 
 Elf32_Ehdr CreateElfHeader();
 Elf32_Phdr CreateProgramHeader();
-unsigned char WriteMachineCode(FILE *fp);
+void WriteMachineCode(FILE *fp);
 
 int main(int argc, char *argv[]) {
 
     char *fname;
 
-    if (argc >= 2)  
-        fname = argv[1];
-    else 
-        fname = "elf-file";
+    if (argc >= 2) fname = argv[1];
+
+    else {
+        fprintf(stderr, "No file name provided.\n");
+        return -1;    
+    }
 
     FILE *efp = fopen(fname, "wb+");
 
@@ -55,19 +57,14 @@ int main(int argc, char *argv[]) {
         return errno;
     }
 
-    Elf32_Ehdr e_head = CreateElfHeader();
+    Elf32_Ehdr ehdr = CreateElfHeader();
     Elf32_Phdr phdr = CreateProgramHeader();
 
-    e_head.e_entry = phdr.p_vaddr + 0xE;     // virtual memory entry point
+    ehdr.e_entry = phdr.p_vaddr + 0xE;     // virtual memory entry point
 
-    fwrite(&e_head, sizeof(e_head), 1, efp);
+    fwrite(&ehdr, sizeof(ehdr), 1, efp);
     fwrite(&phdr, sizeof(phdr), 1, efp);
-    
-    if (!WriteMachineCode(efp)) {
-        fprintf(stderr, "Could not write machine code to file");
-        fclose(efp);
-        return -1;
-    }
+    WriteMachineCode(efp); 
     
     if (fclose(efp) == EOF) {
         fprintf(stderr, "Could not close file stream (could not dump buffer)\n");
@@ -90,36 +87,36 @@ Elf32_Ehdr CreateElfHeader() {
         table for the "Hello, World!\n" string
 */
 
-    Elf32_Ehdr e_head;
+    Elf32_Ehdr ehdr;
 
-    e_head.e_ident[0] = 0x7F;                   // start of identifier " ELF"
-    e_head.e_ident[1] = 'E';            
-    e_head.e_ident[2] = 'L';        
-    e_head.e_ident[3] = 'F';        
-    e_head.e_ident[4] = ELFCLASS32;             // define 32-bit architecture
-    e_head.e_ident[5] = ELFDATA2LSB;            // specify endianness (little)
-    e_head.e_ident[6] = EV_CURRENT;             // ELF version (always EV_CURRENT)
-    e_head.e_ident[7] = ELFOSABI_SYSV;          // OS ABI
-    e_head.e_ident[8] = 0x0;                    // OS ABI version (always 0x0)
+    ehdr.e_ident[0] = 0x7F;                   // start of identifier " ELF"
+    ehdr.e_ident[1] = 'E';            
+    ehdr.e_ident[2] = 'L';        
+    ehdr.e_ident[3] = 'F';        
+    ehdr.e_ident[4] = ELFCLASS32;             // define 32-bit architecture
+    ehdr.e_ident[5] = ELFDATA2LSB;            // specify endianness (little)
+    ehdr.e_ident[6] = EV_CURRENT;             // ELF version (always EV_CURRENT)
+    ehdr.e_ident[7] = ELFOSABI_SYSV;          // OS ABI
+    ehdr.e_ident[8] = 0x0;                    // OS ABI version (always 0x0)
     
-    for (int i = 9; i < sizeof(e_head.e_ident); i++) 
-        e_head.e_ident[i] = 0x0;                // padding :p
+    for (int i = 9; i < sizeof(ehdr.e_ident); i++) 
+        ehdr.e_ident[i] = 0x0;                // padding :p
             
-    e_head.e_type = ET_EXEC;                    // specify this is an executable
-    e_head.e_machine = EM_386;                  // specify machine architecture
-    e_head.e_version = EV_CURRENT;              // elf version. always EV_CURRENT
+    ehdr.e_type = ET_EXEC;                    // specify this is an executable
+    ehdr.e_machine = EM_386;                  // specify machine architecture
+    ehdr.e_version = EV_CURRENT;              // elf version. always EV_CURRENT
     // e_entry
-    e_head.e_phoff = sizeof(Elf32_Ehdr);        // program header table offset (immediately after the ELF header)
-    e_head.e_shoff = 0;                         // section header offset. 0 means no section header
-    e_head.e_flags = 0;                         // OS ABI flags. none for SYSV (Linux)
-    e_head.e_ehsize = sizeof(Elf32_Ehdr);       // ELF header size
-    e_head.e_phentsize = sizeof(Elf32_Phdr);    // size of program header
-    e_head.e_phnum = 1;                         // number of entries in the program header
-    e_head.e_shentsize = 0x28;                  // section header entry size. 0x28 on 32-bit
-    e_head.e_shnum = 0;                         // number of entries in section header
-    e_head.e_shstrndx = 0;                      // i have no idea what this is rn but it's ok to leave it as 0 :D
+    ehdr.e_phoff = sizeof(Elf32_Ehdr);        // program header table offset (immediately after the ELF header)
+    ehdr.e_shoff = 0;                         // section header offset. 0 means no section header
+    ehdr.e_flags = 0;                         // OS ABI flags. none for SYSV (Linux)
+    ehdr.e_ehsize = sizeof(Elf32_Ehdr);       // ELF header size
+    ehdr.e_phentsize = sizeof(Elf32_Phdr);    // size of program header
+    ehdr.e_phnum = 1;                         // number of entries in the program header
+    ehdr.e_shentsize = sizeof(Elf32_Shdr);    // section header entry size. 0x28 on 32-bit
+    ehdr.e_shnum = 0;                         // number of entries in section header
+    ehdr.e_shstrndx = 0;                      // i have no idea what this is rn but it's ok to leave it as 0 :D
 
-    return e_head;
+    return ehdr;
 }
 
 Elf32_Phdr CreateProgramHeader() {
@@ -151,9 +148,7 @@ Elf32_Phdr CreateProgramHeader() {
     return phdr;
 }
 
-unsigned char WriteMachineCode(FILE *fp) {
-    if (fp == NULL) return 0;
-
+void WriteMachineCode(FILE *fp) {
     char msg[14] = "Hello, World!\n";                           // size = 14
 
     char write_call[5] = {
@@ -176,11 +171,13 @@ unsigned char WriteMachineCode(FILE *fp) {
         0xB8,   0x01, 0x00, 0x00, 0x00      // MOV  EAX, 1      ; exit
     };
 
-    char errcode[5] = {
+    char exit_code[5] = {
         0xBB,   0x00, 0x00, 0x00, 0x00      // MOV  EBX, 0      ; return value
     };
 
-    char call[2] = { 0xCD, 0x80 };                      // int 0x80         ; i386 equivalent of syscall
+    char call[2] = { 
+        0xCD, 0x80                                      // int 0x80         ; i386 equivalent of syscall 
+    };          
 
     fwrite(msg, 1, sizeof(msg), fp);
 
@@ -191,8 +188,6 @@ unsigned char WriteMachineCode(FILE *fp) {
     fwrite(call, 1, sizeof(call), fp);
 
     fwrite(exit_call, 1, sizeof(exit_call), fp);
-    fwrite(errcode, 1, sizeof(errcode), fp);
+    fwrite(exit_code, 1, sizeof(exit_code), fp);
     fwrite(call, 1, sizeof(call), fp);
-    
-    return 1;
 }
