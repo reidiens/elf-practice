@@ -56,8 +56,8 @@ Elf32_Ehdr CreateElfHeader() {
     for (int i = 9; i < sizeof(e_head.e_ident); i++) 
         e_head.e_ident[i] = 0x0;        // padding :p
     
-    e_head.e_type = ET_DYN;             // this is a dynamic file
-    e_head.e_machine = EM_X86_64;       // architecture of the machine
+    e_head.e_type = ET_DYN;             // specify this is a dynamic file
+    e_head.e_machine = EM_X86_64;       // specify machine architecture
     e_head.e_version = EV_CURRENT;      // elf version. always EV_CURRENT
     e_head.e_shoff = 0;                 // section header offset. 0 means no section header
     e_head.e_shentsize = 0;             // section header entry size
