@@ -6,24 +6,35 @@
 
 Elf32_Ehdr CreateElfHeader();
 
-int main() {
+int main(int argc, char *argv[]) {
 
-    FILE *efp = fopen("elf-file", "wb+");
+    char *fname;
+
+    if (argc >= 2)  
+        fname = argv[1];
+    else 
+        fname = "elf-file";
+
+    FILE *efp = fopen(fname, "wb+");
+
     if (efp == NULL) {
-        fprintf(stderr, "Could not open file");
+        fprintf(stderr, "Could not open file\n");
         perror(strerror(errno));
         return errno;
     }
 
     Elf32_Ehdr e_head = CreateElfHeader();
 
-    if (fwrite(&e_head, sizeof(e_head), 1, efp) < sizeof(e_head)) {
-        fprintf(stderr, "Could not write file.");
+    fwrite(&e_head, sizeof(e_head), 1, efp);
+    
+    if (fclose(efp) == EOF) {
+        fprintf(stderr, "Could not close file stream (could not dump buffer)\n");
         perror(strerror(errno));
         return errno;
     }
-    
-    fclose(efp);
+
+    printf("Created ELF file \"%s\" successfully :)\n", fname);
+    puts("(as of this build the file isnt fully functional)\n");
     return 0;
 }
 
