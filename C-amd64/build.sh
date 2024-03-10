@@ -29,6 +29,6 @@ else
         ./${PNAME} ${ELFNAME}
 
     fi
-
-    rm -f ${PNAME}
 fi
+
+rm -f ${PNAME}
