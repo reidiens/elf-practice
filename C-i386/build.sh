@@ -7,7 +7,7 @@ echo "building..."
 make PROG=${PNAME}
 echo "built!"
 
-if [ "$1"= "" ]; then
+if [ "$1" != "" ]; then
     echo "generating elf file..."
     ./${PNAME} "$1"
     chmod +x ./"$1" 

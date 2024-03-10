@@ -6,7 +6,6 @@ DEFAULT=amd64-elf-file
 echo "building..."
 make PROG=${PNAME}
 echo "built!"
-chmod +x ${PNAME}
 
 if [ "$1" != "" ]; then
     echo "generating elf file..."
