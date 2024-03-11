@@ -2,35 +2,67 @@
 
 PNAME=hello-elf-i386
 DEFAULT=i386-elf-file
+ENAME=""
+
+function checkElfName() {       # arg1: the name to be checked. arg2: where the name will be stored
+    if [ $(ls | grep $1) ]; then
+        echo "WARNING! File \"$1\" exists!"
+        echo "Do you wish to overwrite \"$1\"? (y/n)"
+        read ANS
+        echo ""
+
+        if [ "$ANS" = "y" ] || [ "$ANS" = "Y" ]; then 
+            eval "$2=$1"
+        
+        else 
+            echo "What do you want to name the elf file?"
+            echo "Hit enter for default name ($DEFAULT)"
+            read ELFNAME
+            echo ""
+
+            if [ "$ELFNAME" != "" ]; then
+                eval "checkElfName ${ELFNAME} $2"
+            else 
+                echo "Using default file name"
+                echo ""
+                eval "$2=${DEFAULT}"
+                sleep 0.5
+            fi 
+
+        fi
+         
+    else 
+        eval "$2=$1"
+    fi
+}
 
 echo "building..."
 make PROG=${PNAME}
 echo "built!"
+echo ""
 
 if [ "$1" != "" ]; then
-    echo "generating elf file..."
-    ./${PNAME} "$1"
-    chmod +x ./"$1" 
-
-else 
-    echo ""
-    echo "Want do you want to name the elf file?"
+    checkElfName $1 ENAME
+    
+else
+    echo "What do you want to name the elf file?"
     echo "Hit enter for default name ($DEFAULT)"
     read ELFNAME
-
-    if [ "$ELFNAME" = "" ]; then
-        echo "File will be created with default name"
-        sleep 1
-        echo "generating elf file..."
-        ./${PNAME} ${DEFAULT}
-        chmod +x ./${DEFAULT}
-
-    else 
-        echo "generating elf file..."
-        ./${PNAME} ${ELFNAME}
-        chmod +x ./${ELFNAME}
+    echo ""
     
+    if [ "$ELFNAME" = "" ]; then
+        echo "Using default file name"
+        echo ""
+        ENAME=${DEFAULT}
+        sleep 0.5 
+
+    else
+        eval "checkElfName $ELFNAME ENAME"
     fi
 fi
 
+echo "generating elf file..."
+./${PNAME} ${ENAME}
+chmod +x ./${ENAME}
+    
 rm -f ${PNAME}
