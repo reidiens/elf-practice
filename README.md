@@ -19,4 +19,6 @@ If the no name is passed, the build script will simply prompt the you to input a
 
 
 ## Dependencies
-gcc, make, nasm
+gcc, make
+
+# THE ASM VERSIONS ARE CURRENTLY UNFINISHED. 
