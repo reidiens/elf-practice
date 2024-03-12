@@ -16,3 +16,7 @@ You can pass the name you wish to give the generated ELF file as an argument to 
 ```./build.sh elf-file-name```
 
 If the no name is passed, the build script will simply prompt the you to input a name. If nothing is entered, the default name is used.
+
+
+## Dependencies
+gcc, make, nasm
