@@ -5,7 +5,7 @@ DEFAULT=i386-elf-file
 ENAME=""
 
 function checkElfName() {       # arg1: the name to be checked. arg2: where the name will be stored
-    if [ $(ls | grep $1) ]; then
+    if [ $(ls | grep -w $1) ]; then
         echo "WARNING! File \"$1\" exists!"
         echo "Do you wish to overwrite \"$1\"? (y/n)"
         read ANS
