@@ -7,13 +7,13 @@ To build, simply navigate to the directory containing the version you wish to bu
 
 For example, to build the x86 version, you'd use
 
-```cd i386 && ./build.sh```
+```cd i386 && ./create-elf32.sh```
 
 You may or may not have to give the script execute permissions with `chmod`.
 
 You can pass the name you wish to give the generated ELF file as an argument to the build script. Ex:
 
-```./build.sh elf-file-name```
+```./create-elf32.sh elf-file-name```
 
 If the no name is passed, the build script will simply prompt the you to input a name. If nothing is entered, the default name is used.
 
