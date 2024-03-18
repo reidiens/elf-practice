@@ -5,9 +5,9 @@
 
 To build, simply navigate to the directory containing the version you wish to build and run the build script.
 
-For example, to build the x86 version written in C, you'd use
+For example, to build the x86 version, you'd use
 
-```cd C-i386 && ./build.sh```
+```cd i386 && ./build.sh```
 
 You may or may not have to give the script execute permissions with `chmod`.
 
@@ -21,4 +21,3 @@ If the no name is passed, the build script will simply prompt the you to input a
 ## Dependencies
 gcc, make
 
-# THE ASM VERSIONS ARE CURRENTLY UNFINISHED. 
