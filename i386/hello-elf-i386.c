@@ -1,22 +1,25 @@
 /*  HELLO WORLD AS AN ELF FILE
     Ruben Toledo
-    03-10-2024
+    03 - 21 - 2024
 ---------------------------------------------------------------
     This program generates an ELF file that, when run
         will execute the classic "Hello, World!" program
         
     Sources used:
-    
+
+        ELF Specification:
+            https://refspecs.linuxfoundation.org/elf/elf.pdf
+
         System V ABI Specification:
             https://www.sco.com/developers/devspecs/gabi41.pdf 
 
-        System V Abi i386 Supplement:
+        System V ABI i386 Supplement:
             https://www.sco.com/developers/devspecs/abi386-4.pdf
 
         Example ELF file that immediately returns 0:
             https://dacvs.neocities.org/1exit
 
-        List of i286 opcodes:
+        List of i386 opcodes:
             http://ref.x86asm.net/coder32.html#xB8
 
         List of x86 Linux system calls:
@@ -54,7 +57,7 @@ int main(int argc, char *argv[]) {
     if (efp == NULL) {
         fprintf(stderr, "Could not open file\n");
         perror(strerror(errno));
-        return errno;
+        return -2;
     }
 
     Elf32_Ehdr ehdr = CreateElfHeader();
@@ -69,7 +72,7 @@ int main(int argc, char *argv[]) {
     if (fclose(efp) == EOF) {
         fprintf(stderr, "Could not close file stream (could not dump buffer)\n");
         perror(strerror(errno));
-        return errno;
+        return -3;
     }
 
     printf("Created ELF file \"%s\" successfully :)\n", fname);
