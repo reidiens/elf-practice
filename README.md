@@ -1,6 +1,6 @@
 # 'Hello World!' as an ELF file
 ### Generates an executable ELF file that says "Hello, World!" for x86 or x86_64 Linux
-#### This is a Linux-Only program. Mac will be coming soon, but Windows can forget about it 😂
+#### This is a Linux-Only program. Mac will be coming soon, but Windows can forget about it XD
 
 ## Building
 
